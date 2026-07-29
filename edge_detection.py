@@ -1,30 +1,57 @@
 import cv2 as cv
+import numpy as np
 
+#Test video loaded
 cap = cv.VideoCapture("test_videos/solidWhiteRight.mp4")
-
+output_path = "ExtractedContent/"
+masking_coordinates = [np.array([[0,540], [960,540], [960, 380], [600,270], [300,270], [0, 350]], np.int32)]
+#read the first frame
 success_flag, frame = cap.read()
-fd = frame.shape
-print(fd)
+print(frame.shape)
 print(frame.dtype)
 print(frame[0,0])
 
-cv.imwrite("first_frame.png", frame)
+#Saved it
+cv.imwrite(output_path + "first_frame.png", frame)
 
-def ced(frame):
-    #img = cv.imread("first_frame.png")
-    gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+# Canny edge detection, grayscaling and gaussian blur
+
+def get_edges(input_frame):
+    gray = cv.cvtColor(input_frame, cv.COLOR_BGR2GRAY)
     blur = cv.GaussianBlur(gray, (5,5), 0)
-    edges1 = cv.Canny(blur, 50, 150)
-    edges2 = cv.Canny(blur, 10, 250)
+    edges = cv.Canny(blur, 50, 150)
 
-    cv.imwrite("edges1_50_150.png", edges1)
-    cv.imwrite("edges2_10_250.png", edges2)
-
-    cv.imshow("frame1", edges1)
-    cv.imshow("frame2", edges2)
+    cv.imwrite(output_path + "edges1_50_150.png", edges)
+    cv.imshow("frame1", edges)
     cv.waitKey(0)
     cv.destroyAllWindows()
 
-    return edges1, edges2
+    return edges
 
-ced(frame)
+def masking(input_frame):
+    outlined_frame = cv.polylines(img= input_frame, pts=masking_coordinates, isClosed=True, color=(0,255,0), thickness=2)
+    cv.imwrite(output_path +"outl1.png", outlined_frame)
+
+    fresh_copy = input_frame.copy()
+
+    filled_mask = cv.fillPoly(img=fresh_copy, pts=masking_coordinates, color=(0,255,0))
+    cv.imwrite(output_path + "fill1.png", filled_mask)
+
+    cv.imshow("outl_frame", outlined_frame)
+    cv.imshow("fill_frame", filled_mask)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+    return outlined_frame, filled_mask
+
+def apply_mask(edges):
+    mask = np.zeros(edges.shape, dtype = np.uint8)
+    cv.fillPoly(mask, masking_coordinates, 255)
+    masked_edges = cv.bitwise_and(edges, mask)
+    cv.imwrite(output_path + "masked.png", masked_edges)
+    cv.imshow("maskedFrame", masked_edges)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+#get_edges(frame)
+apply_mask(get_edges(frame))
