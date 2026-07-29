@@ -52,6 +52,28 @@ def apply_mask(edges):
     cv.imshow("maskedFrame", masked_edges)
     cv.waitKey(0)
     cv.destroyAllWindows()
+    return masked_edges
+    
+def detect_lines(masked_edges):
+    line_coordinates = cv.HoughLinesP(image= masked_edges, rho= 1, theta= np.pi/180, threshold= 30, minLineLength=20, maxLineGap=50)
+    #print(line_coordinates)
+    return line_coordinates
 
+def draw_line(frame, line_coordinates):
+    line_frame_cpy = frame.copy()
+    for line in line_coordinates:
+        x1, y1, x2, y2 = line
+        print(x1, y1, x2, y2)
+        cv.line(line_frame_cpy, (x1, y1), (x2, y2), color=(0,0,255), thickness=3)
+    
+    cv.imwrite(output_path + "lined_frame.png", line_frame_cpy)
+    cv.imshow("Lined_Frame", line_frame_cpy)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+    return line_frame_cpy
+
+draw_line(frame, detect_lines(apply_mask(get_edges(frame))))
+
+#detect_lines(apply_mask(get_edges(frame)))
 #get_edges(frame)
-apply_mask(get_edges(frame))
+# apply_mask(get_edges(frame))
