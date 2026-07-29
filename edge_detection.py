@@ -7,12 +7,10 @@ output_path = "ExtractedContent/"
 masking_coordinates = [np.array([[0,540], [960,540], [960, 380], [600,270], [300,270], [0, 350]], np.int32)]
 #read the first frame
 success_flag, frame = cap.read()
-print(frame.shape)
-print(frame.dtype)
-print(frame[0,0])
+# print(frame.shape)
+# print(frame.dtype)
+# print(frame[0,0])
 
-#Saved it
-cv.imwrite(output_path + "first_frame.png", frame)
 
 # Canny edge detection, grayscaling and gaussian blur
 
@@ -27,6 +25,7 @@ def get_edges(input_frame):
     cv.destroyAllWindows()
 
     return edges
+
 
 def masking(input_frame):
     outlined_frame = cv.polylines(img= input_frame, pts=masking_coordinates, isClosed=True, color=(0,255,0), thickness=2)
@@ -44,6 +43,7 @@ def masking(input_frame):
 
     return outlined_frame, filled_mask
 
+
 def apply_mask(edges):
     mask = np.zeros(edges.shape, dtype = np.uint8)
     cv.fillPoly(mask, masking_coordinates, 255)
@@ -53,11 +53,13 @@ def apply_mask(edges):
     cv.waitKey(0)
     cv.destroyAllWindows()
     return masked_edges
+
     
 def detect_lines(masked_edges):
     line_coordinates = cv.HoughLinesP(image= masked_edges, rho= 1, theta= np.pi/180, threshold= 30, minLineLength=20, maxLineGap=50)
     #print(line_coordinates)
     return line_coordinates
+
 
 def draw_line(frame, line_coordinates):
     line_frame_cpy = frame.copy()
@@ -69,6 +71,7 @@ def draw_line(frame, line_coordinates):
     cv.imshow("Lined_Frame", line_frame_cpy)
     cv.waitKey(0)
     cv.destroyAllWindows()
+
     return line_frame_cpy
 
 def extrapolation(line_coordinates):
@@ -93,6 +96,7 @@ def extrapolation(line_coordinates):
             right_lane.append(line)
             right_slope.append(slope)
             right_intercept.append(intercept)
+
     avg_left_slope = sum(left_slope)/len(left_slope)
     avg_right_slope = sum(right_slope)/len(right_slope)
     avg_left_intercept = sum(left_intercept)/len(left_intercept)
@@ -104,16 +108,8 @@ def extrapolation(line_coordinates):
     x_horizon_left = (270 - avg_left_intercept)/avg_left_slope
     x_horizon_right = (270 - avg_right_intercept)/avg_right_slope
 
-
-
-
-
-    print(x_bottom_left)
-    print(x_bottom_right)
-    print(x_horizon_left)
-    print(x_horizon_right)
-
     return x_bottom_left, x_bottom_right, x_horizon_left, x_horizon_right
+
 
 def draw_lane_lines(frame, x_bottom_left, x_bottom_right, x_horizon_right, x_horizon_left):
     frame_cpy = frame.copy()
@@ -129,8 +125,3 @@ def draw_lane_lines(frame, x_bottom_left, x_bottom_right, x_horizon_right, x_hor
 
 x_bl, x_br, x_hl, x_hr = extrapolation(detect_lines(apply_mask(get_edges(frame))))
 draw_lane_lines(frame, x_bl, x_br, x_hr, x_hl)
-#draw_line(frame, detect_lines(apply_mask(get_edges(frame))))
-
-#detect_lines(apply_mask(get_edges(frame)))
-#get_edges(frame)
-# apply_mask(get_edges(frame))
